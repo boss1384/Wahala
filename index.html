@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahara LiveScore</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0b0b0b;
+color:white;
+}
+
+/* HEADER */
+.header{
+background:#111;
+padding:15px;
+text-align:center;
+border-bottom:2px solid gold;
+}
+
+.header h1{
+color:gold;
+}
+
+/* NAV */
+.nav{
+display:flex;
+justify-content:space-around;
+background:#151515;
+padding:10px;
+position:sticky;
+top:0;
+}
+
+.nav button{
+background:none;
+border:none;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.nav button:hover{
+color:gold;
+}
+
+/* TV */
+.tv iframe{
+width:100%;
+height:200px;
+border:none;
+}
+
+/* SECTION */
+.section{
+display:none;
+padding:10px;
+}
+
+.active{
+display:block;
+}
+
+/* MATCH CARD */
+.match{
+background:#161616;
+margin:10px 0;
+padding:12px;
+border-radius:12px;
+border:1px solid #222;
+}
+
+.league{
+color:#00ff99;
+font-size:13px;
+}
+
+.teams{
+display:flex;
+justify-content:space-between;
+font-weight:bold;
+}
+
+.score{
+color:red;
+}
+
+.info{
+font-size:12px;
+color:#bbb;
+margin-top:5px;
+}
+
+.loading{
+text-align:center;
+color:gold;
+padding:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<h1>⚽ Sahara LiveScore</h1>
+</div>
+
+<!-- TV -->
+<div class="tv">
+<iframe src="https://www.youtube.com/embed/ScMzIvxBSi4"></iframe>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+<button onclick="show('europe')">Europe</button>
+<button onclick="show('africa')">Africa</button>
+<button onclick="show('asia')">Asia</button>
+<button onclick="show('aus')">Australia</button>
+</div>
+
+<!-- SECTIONS -->
+<div id="europe" class="section active"></div>
+<div id="africa" class="section"></div>
+<div id="asia" class="section"></div>
+<div id="aus" class="section"></div>
+
+<script>
+
+const API_KEY = "YOUR_API_KEY_HERE"; 
+// 👉 Get free key from: https://www.api-football.com/
+
+async function loadMatches(){
+
+show('europe');
+
+document.querySelectorAll('.section').forEach(sec=>{
+sec.innerHTML = "<div class='loading'>Loading live matches...</div>";
+});
+
+try{
+
+const res = await fetch("https://v3.football.api-sports.io/fixtures?live=all", {
+method:"GET",
+headers:{
+"x-apisports-key": API_KEY
+}
+});
+
+const data = await res.json();
+
+render(data.response);
+
+}catch(e){
+
+document.getElementById("europe").innerHTML =
+"<div class='loading'>API not connected (add your key)</div>";
+
+}
+
+}
+
+function render(matches){
+
+let eu="", af="", as="", au="";
+
+matches.forEach(m=>{
+
+const html = `
+<div class="match">
+<div class="league">${m.league.name}</div>
+
+<div class="teams">
+<span>${m.teams.home.name}</span>
+<span class="score">${m.goals.home} - ${m.goals.away}</span>
+<span>${m.teams.away.name}</span>
+</div>
+
+<div class="info">
+⏱ ${m.fixture.status.elapsed || 0}' • LIVE
+</div>
+</div>
+`;
+
+let country = m.league.country.toLowerCase();
+
+if(country.includes("eng") || country.includes("spain") || country.includes("italy") || country.includes("france") || country.includes("germany")){
+eu += html;
+}
+else if(country.includes("nigeria") || country.includes("africa") || country.includes("egypt") || country.includes("morocco") || country.includes("ghana")){
+af += html;
+}
+else if(country.includes("japan") || country.includes("china") || country.includes("saudi") || country.includes("india")){
+as += html;
+}
+else{
+au += html;
+}
+
+});
+
+document.getElementById("europe").innerHTML = eu || "<div class='loading'>No Europe matches</div>";
+document.getElementById("africa").innerHTML = af || "<div class='loading'>No Africa matches</div>";
+document.getElementById("asia").innerHTML = as || "<div class='loading'>No Asia matches</div>";
+document.getElementById("aus").innerHTML = au || "<div class='loading'>No Australia matches</div>";
+
+}
+
+/* NAV SWITCH */
+function show(id){
+document.querySelectorAll('.section').forEach(sec=>{
+sec.classList.remove('active');
+});
+document.getElementById(id).classList.add('active');
+}
+
+/* AUTO REFRESH */
+loadMatches();
+setInterval(loadMatches, 30000);
+
+</script>
+
+</body>
+</html>
